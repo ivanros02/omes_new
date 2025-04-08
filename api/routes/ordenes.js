@@ -85,6 +85,47 @@ router.get('/bloques', async (req, res) => {
   }
 });
 
+router.get('/bloques-aceptar', async (req, res) => {
+  let db;
+  try {
+    db = getDBInstance(req);
+
+    const dias = parseInt(req.query.dias, 10) || 0;
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + dias);
+    const formattedDate = fecha.toISOString().slice(0, 10);
+
+    const [rows] = await db.query(`
+      SELECT 
+        CONCAT(COALESCE(p.benef, ''), COALESCE(p.parentesco, '')) AS benef,
+        a.codigo AS cod_practica
+      FROM 
+        turnos t
+      LEFT JOIN paciente p ON p.id = t.paciente
+      LEFT JOIN paci_diag pD ON pD.id_paciente = p.id
+      LEFT JOIN diag d ON d.id = pD.codigo
+      LEFT JOIN actividades a ON a.id = t.motivo
+      LEFT JOIN profesional pr ON t.id_prof = pr.id_prof
+      WHERE 
+        t.llego = 'SI'
+        AND t.atendido = 'SI'
+        AND (a.codigo = 521001 OR a.codigo = 520101)
+        AND t.generado = 0
+        AND t.aceptado = 0
+        AND t.fecha <= ?
+        AND CONCAT(COALESCE(p.benef, ''), COALESCE(p.parentesco, '')) <> ''
+        AND p.obra_social = 4
+      ORDER BY pr.nombreYapellido, t.fecha ASC
+    `, [formattedDate]);
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error al obtener bloques-aceptar:', error);
+    res.status(500).send('Error al obtener los datos.');
+  }
+});
+
+
 
 // POST para marcar como generado (recibe lista de beneficios)
 router.post('/marcar-generado', async (req, res) => {

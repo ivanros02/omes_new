@@ -55,7 +55,7 @@ def ejecutar_consultas(nombre_db, dias):
 def obtener_bloques_profesionales(nombre_db, dias):
     try:
         response = requests.get(
-            f"{API_URL}/api/bloques",
+            f"{API_URL}/api/bloques-aceptar",
             headers={
                 "x-database": nombre_db
             },
@@ -69,17 +69,14 @@ def obtener_bloques_profesionales(nombre_db, dias):
         return [
             (
                 row["benef"],
-                row["cod_practica"],
-                row["cod_diag"],
-                row["nombre_generador"],
-                row["usuario"],
-                row["contraseña"]
+                row["cod_practica"]
             )
             for row in data
         ]
     except requests.RequestException as e:
         print(f"Error al conectar con la API: {e}")
         return []
+
 
 
 
@@ -129,7 +126,7 @@ def iniciar_sesion(usuario, contrasena):
     pass
 
 # Procesar paciente con horarios rotativos
-def procesar_paciente(benef, cod_practica, cod_diag, indice):
+def procesar_paciente(benef, cod_practica, indice):
     horas_y_minutos = [('08', '0'), ('08', '30'), ('09', '0'), ('09', '30'), ('10', '0'), 
                        ('10', '30'), ('11', '0'), ('11', '30'), ('12', '0'), ('12', '30'), 
                        ('13', '0'), ('13', '30'), ('14', '0'), ('14', '30'), ('15', '0'),
@@ -210,8 +207,8 @@ def ejecutar(nombre_db, dias):
     iniciar_sesion(usuario, contrasena)
 
     # Procesar pacientes sin división por bloques
-    for i, (benef, cod_practica, cod_diag, _) in enumerate(obtener_bloques_profesionales(nombre_db, dias)):
-        procesar_paciente(benef, cod_practica, cod_diag, i)
+    for i, (benef, cod_practica) in enumerate(obtener_bloques_profesionales(nombre_db, dias)):
+        procesar_paciente(benef, cod_practica, i)
 
     pyautogui.hotkey('ctrl', 'w')
     time.sleep(3)
