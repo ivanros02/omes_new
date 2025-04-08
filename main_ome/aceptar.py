@@ -209,7 +209,7 @@ def procesar_paciente(benef, cod_practica, indice):
 
 
 def ejecutar(nombre_db, dias):
-    usuario, contrasena, _ = obtener_credenciales()
+    usuario, contrasena, _ = obtener_credenciales(nombre_db)
     iniciar_sesion(usuario, contrasena)
 
     # Procesar pacientes sin división por bloques
