@@ -81,8 +81,14 @@ def obtener_bloques_profesionales(nombre_db, dias):
 
 
 # Seleccionar credenciales únicas
-def obtener_credenciales():
-    return ('UP3069149922304', 'ARGENTINA2025', 'clinica')
+def obtener_credenciales(nombre_db):
+    credenciales_por_db = {
+        "worldsof_medical_pq0303": ("UP3069149922304", "ARGENTINA2025", "clinica"),
+        "worldsof_medical_pq0328": ("UP3070779334800", "Dankvel.2025", "clinica"),
+    }
+
+    return credenciales_por_db.get(nombre_db, ("usuario_default", "password_default", "clinica"))
+
 
 #Fin Conexion api
 
