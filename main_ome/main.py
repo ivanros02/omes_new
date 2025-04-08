@@ -1,4 +1,5 @@
 import tkinter as tk
+import os
 import subprocess
 
 # Mapeo entre el texto visible y la base real
@@ -21,9 +22,14 @@ def ejecutar_script(nombre_script, db_selected, dias):
     if db_selected not in base_map:
         print("Seleccioná una base válida.")
         return
+
     nombre_db = base_map[db_selected]
+
+    # Ruta absoluta al script en la misma carpeta que este archivo
+    script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), nombre_script)
+
     try:
-        subprocess.run(["python", nombre_script, nombre_db, dias], check=True)
+        subprocess.run(["python", script_path, nombre_db, dias], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error al ejecutar {nombre_script}: {e}")
 

@@ -52,13 +52,12 @@ def ejecutar_consultas(nombre_db, dias):
 
 
 
-def obtener_bloques_profesionales(nombre_db, nombre_fijo, dias):
+def obtener_bloques_profesionales(nombre_db, dias):
     try:
         response = requests.get(
             f"{API_URL}/api/bloques",
             headers={
-                "x-database": nombre_db,
-                "x-nombre-fijo": nombre_fijo
+                "x-database": nombre_db
             },
             params={
                 "dias": dias
@@ -68,7 +67,14 @@ def obtener_bloques_profesionales(nombre_db, nombre_fijo, dias):
         data = response.json()
         print("Datos obtenidos desde la API:", data)
         return [
-            (row["benef"], row["cod_practica"], row["cod_diag"], row["nombre_generador"])
+            (
+                row["benef"],
+                row["cod_practica"],
+                row["cod_diag"],
+                row["nombre_generador"],
+                row["usuario"],
+                row["contraseña"]
+            )
             for row in data
         ]
     except requests.RequestException as e:
@@ -199,12 +205,12 @@ def procesar_paciente(benef, cod_practica, cod_diag, indice):
 
 
 
-def ejecutar(nombre_db, nombre_fijo, dias):
+def ejecutar(nombre_db, dias):
     usuario, contrasena, _ = obtener_credenciales()
     iniciar_sesion(usuario, contrasena)
 
     # Procesar pacientes sin división por bloques
-    for i, (benef, cod_practica, cod_diag, _) in enumerate(obtener_bloques_profesionales(nombre_db, nombre_fijo, dias)):
+    for i, (benef, cod_practica, cod_diag, _) in enumerate(obtener_bloques_profesionales(nombre_db, dias)):
         procesar_paciente(benef, cod_practica, cod_diag, i)
 
     pyautogui.hotkey('ctrl', 'w')
@@ -217,15 +223,15 @@ def ejecutar(nombre_db, nombre_fijo, dias):
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) >= 4:
+    if len(sys.argv) >= 3:
         nombre_db = sys.argv[1]
-        nombre_fijo = sys.argv[2]
-        dias = sys.argv[3]
+        dias = sys.argv[2]
     else:
-        print("❌ Faltan argumentos.")
+        print("❌ Faltan argumentos. Uso esperado:")
+        print("python generar_bloques.py <nombre_db> <dias>")
         sys.exit(1)
 
-    ejecutar(nombre_db, nombre_fijo, dias)
+    ejecutar(nombre_db, dias)
 
 
 
