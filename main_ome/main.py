@@ -3,15 +3,10 @@ import subprocess
 
 # Mapeo entre el texto visible y la base real
 base_map = {
-    "COMTAN": "pq0303_token",
+    "COMTAN": "worldsof_medical_pq0303",
     "DANKVEL": "worldsof_medical_pq0328",
     "PEÑI": "worldsof_medical_pq2001"
 }
-
-profesional_opciones = [
-    "FORBITO AGUSTIN",
-    "Ramirez Blankenhorst Oscar"
-]
 
 dias_opciones = {
     "Hoy": "0",
@@ -22,15 +17,16 @@ dias_opciones = {
 
 
 # Ejecutar scripts pasando la base como argumento
-def ejecutar_script(nombre_script, db_selected, prof_selected, dias):
+def ejecutar_script(nombre_script, db_selected, dias):
     if db_selected not in base_map:
         print("Seleccioná una base válida.")
         return
     nombre_db = base_map[db_selected]
     try:
-        subprocess.run(["python", nombre_script, nombre_db, prof_selected, dias], check=True)
+        subprocess.run(["python", nombre_script, nombre_db, dias], check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error al ejecutar {nombre_script}: {e}")
+
 
 
 # Crear ventana principal
@@ -42,10 +38,6 @@ ventana.geometry("400x500")
 selected_db = tk.StringVar(ventana)
 selected_db.set("COMTAN")
 
-# Profesional seleccionado (por defecto el primero)
-selected_prof = tk.StringVar(ventana)
-selected_prof.set(profesional_opciones[0])
-
 # Día seleccionado (por defecto "Hoy")
 selected_dias = tk.StringVar(ventana)
 selected_dias.set("Hoy")
@@ -56,12 +48,6 @@ label_select.pack(pady=5)
 dropdown = tk.OptionMenu(ventana, selected_db, *base_map.keys())
 dropdown.pack(pady=5)
 
-# Menú de selección de profesional fijo
-label_prof = tk.Label(ventana, text="Seleccione Profesional para 520101:")
-label_prof.pack(pady=5)
-dropdown_prof = tk.OptionMenu(ventana, selected_prof, *profesional_opciones)
-dropdown_prof.pack(pady=5)
-
 # Menú de selección de días
 label_dias = tk.Label(ventana, text="Seleccione Día:")
 label_dias.pack(pady=5)
@@ -70,16 +56,16 @@ dropdown_dias.pack(pady=5)
 
 # Botones con todos los valores seleccionados
 btn_generar = tk.Button(ventana, text="Generar OME", width=25,
-    command=lambda: ejecutar_script("generar.py", selected_db.get(), selected_prof.get(), dias_opciones[selected_dias.get()]))
+    command=lambda: ejecutar_script("generar.py", selected_db.get(), dias_opciones[selected_dias.get()]))
 
 btn_aceptar = tk.Button(ventana, text="Aceptar OME", width=25,
-    command=lambda: ejecutar_script("aceptar.py", selected_db.get(), selected_prof.get(), dias_opciones[selected_dias.get()]))
+    command=lambda: ejecutar_script("aceptar.py", selected_db.get(), dias_opciones[selected_dias.get()]))
 
 btn_consulta_generar = tk.Button(ventana, text="Consulta Generar OME", width=25,
-    command=lambda: ejecutar_script("consulta_generar.py", selected_db.get(), selected_prof.get(), dias_opciones[selected_dias.get()]))
+    command=lambda: ejecutar_script("consulta_generar.py", selected_db.get(), dias_opciones[selected_dias.get()]))
 
 btn_consulta_aceptar = tk.Button(ventana, text="Consulta Aceptar OME", width=25,
-    command=lambda: ejecutar_script("consulta_aceptar.py", selected_db.get(), selected_prof.get(), dias_opciones[selected_dias.get()]))
+    command=lambda: ejecutar_script("consulta_aceptar.py", selected_db.get(), dias_opciones[selected_dias.get()]))
 
 # Ubicar botones
 btn_generar.pack(pady=10)

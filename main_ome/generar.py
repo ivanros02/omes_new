@@ -13,13 +13,12 @@ load_dotenv()  # Cargar variables del .env
 API_URL = os.getenv("API_URL", "http://localhost:3000/api")  # fallback por si no está
 
 # Conexion api
-def obtener_bloques_profesionales(nombre_db, nombre_fijo, dias):
+def obtener_bloques_profesionales(nombre_db, dias):
     try:
         response = requests.get(
             f"{API_URL}/api/bloques",
             headers={
-                "x-database": nombre_db,
-                "x-nombre-fijo": nombre_fijo
+                "x-database": nombre_db
             },
             params={
                 "dias": dias
@@ -29,7 +28,14 @@ def obtener_bloques_profesionales(nombre_db, nombre_fijo, dias):
         data = response.json()
         print("Datos obtenidos desde la API:", data)
         return [
-            (row["benef"], row["cod_practica"], row["cod_diag"], row["nombre_generador"])
+            (
+                row["benef"],
+                row["cod_practica"],
+                row["cod_diag"],
+                row["nombre_generador"],
+                row["usuario"],
+                row["contraseña"]
+            )
             for row in data
         ]
     except requests.RequestException as e:
@@ -204,10 +210,10 @@ def procesar_paciente(benef, cod_practica, cod_diag):
 
 
 # Main: Proceso de OME
-def ejecutar(nombre_db, nombre_fijo, dias):
+def ejecutar(nombre_db, dias):
     bloque_actual = None
 
-    for benef, cod_practica, cod_diag, prof_generador, usuario, contrasena in obtener_bloques_profesionales(nombre_db, nombre_fijo, dias):
+    for benef, cod_practica, cod_diag, prof_generador, usuario, contrasena in obtener_bloques_profesionales(nombre_db, dias):
         if bloque_actual != prof_generador:
             if bloque_actual is not None:
                 pyautogui.hotkey('ctrl', 'w')
@@ -226,19 +232,20 @@ def ejecutar(nombre_db, nombre_fijo, dias):
 
     ejecutar_consultas(nombre_db, dias)
 
+
 if __name__ == "__main__":
     import sys
 
-    if len(sys.argv) >= 4:
+    if len(sys.argv) >= 3:
         nombre_db = sys.argv[1]
-        nombre_fijo = sys.argv[2]
-        dias = sys.argv[3]
+        dias = sys.argv[2]
     else:
         print("❌ Faltan argumentos. Uso esperado:")
-        print("python generar_bloques.py <nombre_db> <nombre_fijo> <dias>")
+        print("python generar_bloques.py <nombre_db> <dias>")
         sys.exit(1)
 
-    ejecutar(nombre_db, nombre_fijo, dias)
+    ejecutar(nombre_db, dias)
+
 
 
 '''

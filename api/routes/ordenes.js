@@ -16,19 +16,24 @@ router.get('/bloques', async (req, res) => {
   let db;
   try {
     db = getDBInstance(req);
-    // Obtener el valor del parámetro opcional "dias"
-    const dias = parseInt(req.query.dias, 10) || 0; // Si no viene nada, se usa 0 (hoy)
 
+    const dbName = req.headers['x-database'] || req.query.db;
+
+    const dias = parseInt(req.query.dias, 10) || 0;
     const fecha = new Date();
     fecha.setDate(fecha.getDate() + dias);
     const formattedDate = fecha.toISOString().slice(0, 10);
 
+    // Definimos qué nombre usar o si se usa el campo 'prof_generador'
+    let nombreEspecial = null;
+    let usarCampoProfGenerador = false;
 
-    // Leer el nombre del profesional desde header o query param
-    const nombreFijo = req.headers['x-nombre-fijo'] || req.query.nombre_fijo;
-
-    if (!nombreFijo) {
-      return res.status(400).send("Debe especificarse el nombre del profesional fijo (x-nombre-fijo)");
+    if (dbName === 'worldsof_medical_pq0303') {
+      nombreEspecial = 'FORBITO AGUSTIN';
+    } else if (dbName === 'worldsof_medical_pq0328') {
+      nombreEspecial = 'Ramirez Blankenhorst Oscar';
+    } else if (dbName === 'worldsof_medical_pq2001') {
+      usarCampoProfGenerador = true;
     }
 
     const [rows] = await db.query(`
@@ -36,13 +41,21 @@ router.get('/bloques', async (req, res) => {
         CONCAT(COALESCE(p.benef, ''), COALESCE(p.parentesco, '')) AS benef,
         a.codigo AS cod_practica,
         CASE WHEN d.codigo IS NULL THEN 'F99' ELSE d.codigo END AS cod_diag,
-        CASE WHEN a.codigo = 520101 THEN ? ELSE pr.nombreYapellido END AS nombre_generador,
-        CASE WHEN a.codigo = 520101 THEN (
-          SELECT usuario FROM profesional WHERE nombreYapellido = ? LIMIT 1
-        ) ELSE pr.usuario END AS usuario,
-        CASE WHEN a.codigo = 520101 THEN (
-          SELECT contraseña FROM profesional WHERE nombreYapellido = ? LIMIT 1
-        ) ELSE pr.contraseña END AS contraseña
+        CASE 
+          WHEN a.codigo = 520101 THEN 
+            ${usarCampoProfGenerador ? 'pr.prof_generador' : '?'}
+          ELSE pr.nombreYapellido 
+        END AS nombre_generador,
+        CASE 
+          WHEN a.codigo = 520101 THEN 
+            (SELECT usuario FROM profesional WHERE nombreYapellido = ${usarCampoProfGenerador ? 'pr.prof_generador' : '?'} LIMIT 1)
+          ELSE pr.usuario 
+        END AS usuario,
+        CASE 
+          WHEN a.codigo = 520101 THEN 
+            (SELECT contraseña FROM profesional WHERE nombreYapellido = ${usarCampoProfGenerador ? 'pr.prof_generador' : '?'} LIMIT 1)
+          ELSE pr.contraseña 
+        END AS contraseña
       FROM 
         turnos t
       LEFT JOIN paciente p ON p.id = t.paciente
@@ -59,7 +72,11 @@ router.get('/bloques', async (req, res) => {
         AND CONCAT(COALESCE(p.benef, ''), COALESCE(p.parentesco, '')) <> ''
         AND p.obra_social = 4
       ORDER BY pr.nombreYapellido, t.fecha ASC
-    `, [nombreFijo, nombreFijo, nombreFijo, formattedDate]);
+    `,
+      usarCampoProfGenerador
+        ? [formattedDate] // solo necesita la fecha si usa prof_generador
+        : [nombreEspecial, nombreEspecial, nombreEspecial, formattedDate] // los 3 ? del query
+    );
 
     res.json(rows);
   } catch (error) {
