@@ -150,7 +150,7 @@ router.post('/marcar-generado', async (req, res) => {
       SET t.generado = 1
       WHERE CONCAT(p.benef, p.parentesco) IN (${placeholders})
       AND a.codigo = ?
-      AND t.fecha = ?
+      AND t.fecha <= ?
     `;
 
     const [result] = await db.query(query, [...beneficios, cod_practica, fechaObjetivo]);
@@ -192,7 +192,7 @@ router.post('/marcar-aceptar', async (req, res) => {
       SET t.generado = 1, t.aceptado = 1
       WHERE CONCAT(p.benef, p.parentesco) IN (${placeholders})
       AND a.codigo = ?
-      AND t.fecha = ?
+      AND t.fecha <= ?
     `;
 
     const [result] = await db.query(query, [...beneficios, cod_practica, fechaObjetivo]);

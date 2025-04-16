@@ -7,6 +7,8 @@ import requests
 import sys
 import os
 from dotenv import load_dotenv
+import subprocess
+import json
 
 load_dotenv()  # Cargar variables del .env
 
@@ -17,27 +19,50 @@ def obtener_bloques_profesionales(nombre_db, dias):
     try:
         response = requests.get(
             f"{API_URL}/api/bloques",
-            headers={
-                "x-database": nombre_db
-            },
-            params={
-                "dias": dias
-            }
+            headers={"x-database": nombre_db},
+            params={"dias": dias}
         )
         response.raise_for_status()
         data = response.json()
         print("Datos obtenidos desde la API:", data)
-        return [
-            (
-                row["benef"],
-                row["cod_practica"],
-                row["cod_diag"],
-                row["nombre_generador"],
-                row["usuario"],
-                row["contraseña"]
-            )
-            for row in data
-        ]
+
+        resultados = []
+
+        # Ruta absoluta al scraper.js
+        script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'datosPadron', 'scraper.js'))
+
+        for row in data:
+            benef = row["benef"]
+            if len(benef) < 3:
+                continue
+
+            beneficio = benef[:-2]
+            parentesco = benef[-2:]
+
+            try:
+                result = subprocess.run(
+                    ["node", script_path, beneficio, parentesco],
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                datos_scraper = json.loads(result.stdout)
+
+                # ✅ Solo devolvemos lo necesario para ejecutar()
+                resultados.append((
+                    benef,
+                    row["cod_practica"],
+                    row["cod_diag"],
+                    row["nombre_generador"],
+                    row["usuario"],
+                    row["contraseña"]
+                ))
+
+            except subprocess.CalledProcessError as e:
+                print(f"❌ Scraper error para {benef}: {e.stderr.strip()}")
+
+        return resultados
+
     except requests.RequestException as e:
         print(f"Error al conectar con la API: {e}")
         return []
