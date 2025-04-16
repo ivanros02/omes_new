@@ -83,11 +83,22 @@ def obtener_bloques_profesionales(nombre_db, dias):
 # Seleccionar credenciales únicas
 def obtener_credenciales(nombre_db):
     credenciales_por_db = {
-        "worldsof_medical_pq0303": ("UP3069149922304", "ARGENTINA2025", "clinica"),
+        "worldsof_medical_pq0303": ("UP3069149922304", "ARGENTINA2026", "clinica"),
         "worldsof_medical_pq0328": ("UP3070779334800", "Dankvel.2025", "clinica"),
     }
 
     return credenciales_por_db.get(nombre_db, ("usuario_default", "password_default", "clinica"))
+
+def obtener_tecla_boca(nombre_db):
+    teclas_por_db = {
+        "worldsof_medical_pq0303": "c",  # COMTAN
+        "worldsof_medical_pq0328": "d",  # DANKVEL
+        "worldsof_medical_pq0402": "c",  # Ejemplo extra
+        # Agregá más aquí...
+    }
+
+    # Valor por defecto si no se encuentra
+    return teclas_por_db.get(nombre_db, "c")
 
 
 #Fin Conexion api
@@ -132,89 +143,98 @@ def iniciar_sesion(usuario, contrasena):
     pass
 
 # Procesar paciente con horarios rotativos
-def procesar_paciente(benef, cod_practica, indice):
+def procesar_paciente(benef, cod_practica, tecla_boca, indice):
     horas_y_minutos = [('08', '0'), ('08', '30'), ('09', '0'), ('09', '30'), ('10', '0'), 
                        ('10', '30'), ('11', '0'), ('11', '30'), ('12', '0'), ('12', '30'), 
                        ('13', '0'), ('13', '30'), ('14', '0'), ('14', '30'), ('15', '0'),
                        ('15', '30'), ('16', '0'), ('16', '30'), ('17', '0'), ('17', '30')]
-    
+
     hora, minuto = horas_y_minutos[indice % len(horas_y_minutos)]
 
     pyautogui.press('tab', presses=13)
     pyautogui.hotkey('ctrl', 'a')
     pyautogui.press('del')
-    pyautogui.typewrite(str(benef))  # Utiliza la línea actual del archivo
-    pyautogui.press('tab',presses=4)
+    pyautogui.typewrite(str(benef))
+    pyautogui.press('tab', presses=4)
     pyautogui.press('enter')
     pyautogui.press('p')
     pyautogui.press('p')
     pyautogui.press('enter')
     time.sleep(3)
 
-    pyautogui.press('tab', presses=5)  # hasta el boton buscar
+    pyautogui.press('tab', presses=5)
     pyautogui.press('enter')
     time.sleep(4)
-    pyautogui.press('pagedown')  # Simula una pulsación de la tecla Page Down
+    pyautogui.press('pagedown')
     time.sleep(3)
-    
+
     try:
-        boton = pyautogui.locateCenterOnScreen('./img/botonValidar.png', confidence=0.9)  # click en validar
-        if boton is not None:  # Verificar si la imagen fue encontrada
+        boton = pyautogui.locateCenterOnScreen('./img/botonValidar.png', confidence=0.9)
+
+        if boton is not None:
             x, y = boton
             pyautogui.click(x, y)
             time.sleep(5)
-            pyautogui.press('tab', presses=3)  # llegar a fecha
-            pyautogui.press('right')
-            pyautogui.press('enter')  # pone la fecha actual por defecto
-            time.sleep(2)
-            horario = pyautogui.locateCenterOnScreen('./img/horario.png', confidence=0.7)  # click en horario
-        if horario is not None:  # Verificar si la imagen fue encontrada
-            x, y = horario
-            pyautogui.click(x, y)
-            time.sleep(1)
-            pyautogui.typewrite(hora)  # hora
-            time.sleep(1)
+            pyautogui.press('tab', presses=3)
             pyautogui.press('enter')
-            pyautogui.press('tab')
-            time.sleep(1)
-            pyautogui.typewrite(minuto)  # minutos
-            time.sleep(1)   
-            pyautogui.press('tab',presses=2)
-            time.sleep(1)
-            pyautogui.press('c')  # primera boca
-            time.sleep(1)
-            pyautogui.press('tab')  # hasta aceptar
-            pyautogui.press('enter')  # acepto
-            time.sleep(3)
-            pyautogui.press('enter')  # para aceptar
+            time.sleep(2)
 
-            # Guardar en el archivo de resultados
-            with open('resultadosACEPTACION.txt', 'a') as result_file:
-                result_file.write(f"{benef} - {cod_practica} - Aceptada\n")
-            time.sleep(5)
-             
+            horario = pyautogui.locateCenterOnScreen('./img/horario.png', confidence=0.7)
+
+            if horario is not None:
+                x, y = horario
+                pyautogui.click(x, y)
+                time.sleep(1)
+                pyautogui.typewrite(hora)
+                time.sleep(1)
+                pyautogui.press('enter')
+                pyautogui.press('tab')
+                time.sleep(1)
+                pyautogui.typewrite(minuto)
+                time.sleep(1)
+                pyautogui.press('tab', presses=2)
+                time.sleep(1)
+                pyautogui.press(tecla_boca)
+                time.sleep(1)
+                pyautogui.press('tab')
+                pyautogui.press('enter')
+                time.sleep(3)
+                pyautogui.press('enter')
+
+                with open('resultadosACEPTACION.txt', 'a') as result_file:
+                    result_file.write(f"{benef} - {cod_practica} - Aceptada\n")
+            else:
+                # Si no se encontró horario
+                with open('resultadosACEPTACION.txt', 'a') as result_file:
+                    result_file.write(f"{benef} - {cod_practica} - No Aceptada\n")
         else:
+            # Si no se encontró el botón validar
             with open('resultadosACEPTACION.txt', 'a') as result_file:
                 result_file.write(f"{benef} - {cod_practica} - No Aceptada\n")
+
             panel = pyautogui.locateCenterOnScreen('./img/panelAceptacion.png', confidence=0.7)
-            if panel is not None:  # Verificar si la imagen fue encontrada
+            if panel is not None:
                 x, y = panel
                 pyautogui.click(x, y)
-               
+
         time.sleep(3)
 
     except Exception as e:
         print(f"Error inesperado: {e}")
+        with open('resultadosACEPTACION.txt', 'a') as result_file:
+            result_file.write(f"{benef} - {cod_practica} - ERROR: {str(e)}\n")
+
 
 
 
 def ejecutar(nombre_db, dias):
     usuario, contrasena, _ = obtener_credenciales(nombre_db)
+    tecla_boca = obtener_tecla_boca(nombre_db)
     iniciar_sesion(usuario, contrasena)
 
     # Procesar pacientes sin división por bloques
     for i, (benef, cod_practica) in enumerate(obtener_bloques_profesionales(nombre_db, dias)):
-        procesar_paciente(benef, cod_practica, i)
+        procesar_paciente(benef, cod_practica,tecla_boca, i)
 
     pyautogui.hotkey('ctrl', 'w')
     time.sleep(3)

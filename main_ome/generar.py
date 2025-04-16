@@ -174,7 +174,7 @@ def procesar_paciente(benef, cod_practica, cod_diag):
     if generada is not None:
         generadas += 1  # Incrementar la cuenta de órdenes generadas
         with open('reporte_ordenes.txt', 'a') as reporte:
-            reporte.write(f"{benef} - Generada\n")  # Guardar en el reporte
+            reporte.write(f"{benef} - Generada - {cod_practica}\n")  # Guardar en el reporte
         pyautogui.press('tab')
         pyautogui.press('enter')
         pyautogui.press('up', presses=4)

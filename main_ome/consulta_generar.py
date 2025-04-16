@@ -56,7 +56,7 @@ def ejecutar_consultas(nombre_db, dias):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
         nombre_db = sys.argv[1]
-        dias = sys.argv[3]
+        dias = sys.argv[2]
     else:
         print("⚠️ No se especificó la base de datos. Usando valor por defecto.")
 
